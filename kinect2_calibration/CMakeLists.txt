@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(camera_calibration)
+project(kinect2_calibration)
 
 set(CMAKE_BUILD_TYPE Release)
 #set(CMAKE_BUILD_TYPE RelWithDebInfo)
 #set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -DBT_USE_DOUBLE_PRECISION -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -std=c++11 -DBT_USE_DOUBLE_PRECISION -Wall")
 # Unused warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wuninitialized -Winit-self -Wunused-function -Wunused-label -Wunused-variable -Wunused-but-set-variable -Wunused-but-set-parameter")
 # Additional warnings
@@ -57,8 +57,8 @@ include_directories(include
   ${OpenCV_INCLUDE_DIR}
 )
 
-add_executable(camera_calibration src/camera_calibration.cpp)
-target_link_libraries(camera_calibration
+add_executable(kinect2_calibration src/kinect2_calibration.cpp)
+target_link_libraries(kinect2_calibration
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
