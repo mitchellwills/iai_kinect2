@@ -1,14 +1,26 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(depth_registration)
 
-set(CMAKE_BUILD_TYPE Release)
-#set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -std=c++11 -DBT_USE_DOUBLE_PRECISION -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBT_USE_DOUBLE_PRECISION -Wall")
 # Unused warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wuninitialized -Winit-self -Wunused-function -Wunused-label -Wunused-variable -Wunused-but-set-variable -Wunused-but-set-parameter")
 # Additional warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Warray-bounds -Wtype-limits -Wreturn-type -Wsequence-point -Wparentheses -Wmissing-braces -Wchar-subscripts -Wswitch -Wwrite-strings -Wenum-compare -Wempty-body -Wlogical-op")
+
+# Check for c++11 support
+INCLUDE(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+IF(COMPILER_SUPPORTS_CXX11)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+ELSEIF(COMPILER_SUPPORTS_CXX0X)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+ELSE()
+  MESSAGE(ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+ENDIF()
+
+# additional cmake modules
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 find_package(catkin REQUIRED COMPONENTS roscpp)
 find_package(cmake_modules QUIET)
@@ -17,7 +29,7 @@ find_package(cmake_modules QUIET)
 find_package(OpenCV REQUIRED)
 find_package(OpenMP)
 find_package(Eigen)
-find_library(OPENCL_LIBRARIES OpenCL)
+find_package(OpenCL)
 
 if(OPENMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -36,7 +48,7 @@ else()
   set(DEPTH_REG_CPU OFF)
 endif()
 
-if(OPENCL_LIBRARIES)
+if(OPENCL_FOUND)
   message(STATUS "OpenCL based depth registration enabled")
   set(DEPTH_REG_OPENCL ON)
   add_definitions(-DDEPTH_REG_OPENCL)
@@ -95,13 +107,10 @@ if(DEPTH_REG_CPU)
 endif()
 
 if(DEPTH_REG_OPENCL)
+  include_directories(${OPENCL_INCLUDE_DIRS})
   add_definitions(-DREG_OPENCL_FILE="${PROJECT_SOURCE_DIR}/src/depth_registration.cl")
   set(MODULES ${MODULES} src/depth_registration_opencl.cpp)
-  if(APPLE)
-    set(MODULE_LIBS ${MODULE_LIBS} ${OPENCL_LIBRARIES})
-  else()
-    set(MODULE_LIBS ${MODULE_LIBS} OpenCL)
-  endif()
+  set(MODULE_LIBS ${MODULE_LIBS} ${OPENCL_LIBRARIES})
 endif()
 
 add_library(depth_registration SHARED src/depth_registration.cpp ${MODULES})
